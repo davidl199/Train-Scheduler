@@ -22,7 +22,7 @@ var config = {
 		var trainTime = moment($("#train-time-input").val().trim(), "HH:mm").subtract(10, "years").format("X");;
 		var frequency = $("#frequency-input").val().trim();
 
-		//Create a train
+		//Creates local "temporary" object for holding train data
 		var newTrain = {
 			name:  trainName,
 			destination: destination,
@@ -30,7 +30,7 @@ var config = {
 			frequency: frequency,
 		}
 
-		//insert data to firebase
+		//Upload data to firebase
 		trainDatabase.ref().push(newTrain);
 
 		//clear previous input
@@ -38,4 +38,24 @@ var config = {
 		$("#destination-input").val("");
 		$("#train-time-input").val("");
 		$("#frequency-input").val("");
+
+		false;
     });
+
+    //Create Firebase event for adding train to the database and a row in the HTML table when a user adds an entry
+    trainDatabase.ref().on("child_added", function(childSnapshot, prevChildKey){
+        
+        var trainName = childSnapshot.val().name;
+		var destination = childSnapshot.val().destination;
+		var trainTime = childSnapshot.val().trainTime;
+		var frequency = childSnapshot.val().frequency;
+
+		var timeRemaining = moment().diff(moment.unix(trainTime), "minutes") % frequency ;
+		var minutes = frequency - timeRemaining;
+
+		var nextTrainArrival = moment().add(minutes, "m").format("hh:mm A");
+
+		//add train to table
+        $("#schedule-table > tbody").append("<tr><td>" + trainName + "</td><td>"+ destination + "</td><td>" + frequency + " mins" + "</td><td>" + nextTrainArrival + "</td><td>" + minutes + "</td></tr>");
+
+	});
